@@ -1,0 +1,13 @@
+name: "Setup MyCLI"
+description: "Installs MyCLI and adds it to the PATH"
+author: "Your Name"
+
+inputs:
+  version:
+    description: "The CLI version to install"
+    required: false
+    default: "latest"
+
+runs:
+  using: "node16"
+  main: "index.js"

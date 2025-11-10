@@ -7,6 +7,20 @@ inputs:
     description: "The CLI version to install"
     required: false
     default: "latest"
+  fallback:
+    description: "Fallback installation method (none|github-release). If 'github-release', provide release_owner, release_repo and asset_name."
+    required: false
+    default: "none"
+  release_owner:
+    description: "Owner/org of GitHub repo to use for GitHub Release fallback (e.g. 'myorg')"
+    required: false
+  release_repo:
+    description: "Repo name of GitHub repo to use for GitHub Release fallback (e.g. 'mycli')"
+    required: false
+  asset_name:
+    description: "Release asset filename to download for the current runner (e.g. 'mycli-linux-amd64' or 'mycli')"
+    required: false
+    default: "mycli-linux-amd64"
 
 runs:
   using: "node16"

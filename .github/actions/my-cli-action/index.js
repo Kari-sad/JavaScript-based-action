@@ -11,7 +11,36 @@ async function run() {
     // Run installer under bash with pipefail so failures in curl or the pipe
     // cause a non-zero exit code and throw in execSync.
     const installCmd = `bash -lc "set -euo pipefail; curl -fsSL https://cli.example.com/install.sh | sh -s -- ${version}"`;
-    execSync(installCmd, { stdio: 'inherit' });
+    try {
+      execSync(installCmd, { stdio: 'inherit' });
+    } catch (installerError) {
+      // Installer failed (network or remote host). Try fallback if configured.
+      const fallback = core.getInput('fallback') || 'none';
+      const releaseOwner = core.getInput('release_owner');
+      const releaseRepo = core.getInput('release_repo');
+      const assetName = core.getInput('asset_name') || 'mycli-linux-amd64';
+
+      console.warn(`Installer failed: ${installerError && installerError.message ? installerError.message : installerError}`);
+      if (fallback === 'github-release' && releaseOwner && releaseRepo) {
+        console.log('Attempting GitHub Releases fallback...');
+        const url = `https://github.com/${releaseOwner}/${releaseRepo}/releases/download/v${version}/${assetName}`;
+        const tmpPath = `/tmp/mycli-${Date.now()}`;
+        try {
+          execSync(`curl -fsSL -o ${tmpPath} ${url}`, { stdio: 'inherit' });
+          execSync(`chmod +x ${tmpPath}`);
+          // Ensure bin dir exists and move the binary
+          execSync(`mkdir -p ${path.join(process.env.HOME || '/', '.mycli', 'bin')}`);
+          execSync(`mv ${tmpPath} ${path.join(process.env.HOME || '/', '.mycli', 'bin', 'mycli')}`);
+          console.log(`Downloaded asset from ${url} and installed to ~/.mycli/bin/mycli`);
+        } catch (fallbackErr) {
+          // Both installer and fallback failed — rethrow to outer catch
+          throw new Error(`Installer failed and fallback download failed: ${fallbackErr && fallbackErr.message ? fallbackErr.message : fallbackErr}`);
+        }
+      } else {
+        // No fallback configured or missing info — rethrow original error
+        throw installerError;
+      }
+    }
 
     // Determine the expected bin path of the installed CLI
     const cliPath = path.join(process.env.HOME || '/', '.mycli', 'bin');

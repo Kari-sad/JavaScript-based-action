@@ -16,8 +16,8 @@ jobs:
       - name: Install MyCLI
         uses: ./.github/actions/my-cli-action
         with:
-          version: '1.2.3'     
+          version: '1.2.3' 
       - name: Verify CLI Installation
         run: |
           echo "Checking MyCLI version..."
-          mycli --version 
+          mycli --version
